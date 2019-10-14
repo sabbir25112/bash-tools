@@ -1,0 +1,73 @@
+#!/bin/bash
+
+function get_current_branch() {
+  local CURRENT_BRANCH=`git branch | grep "*"`
+  echo ${CURRENT_BRANCH/* /}
+}
+
+function is_commitable_branch() {
+  CURRENT_BRANCH=$1
+  if [ "$CURRENT_BRANCH" != "develop" ] && [ "$CURRENT_BRANCH" != "master" ]; 
+    then 
+      echo 1 
+    else 
+      echo 0 
+  fi
+}
+
+function pull() {
+  git pull origin $1 > /dev/null
+}
+
+function has_change() {
+  if [ -n "$(git diff-index --name-only HEAD --)" ] 
+    then
+      echo 1
+    else 
+      echo 0;
+  fi
+}
+
+commit(){
+    echo "Please enter a commit message..."
+    read msg
+    git add . > /dev/null
+    git commit -am "$msg" > /dev/null
+}
+
+function check_commit(){
+    echo ========== CHECKING FOR CHANGES ========
+    changes=$(git diff-index --name-only HEAD)
+        echo ""
+        echo "*** CHANGES FOUND ***"
+        echo "$changes"
+	echo ""
+        echo "You have uncomitted changes."
+        echo "Would you like to commit them (y/n)?"
+        read n
+        case $n in
+            "y") commit;;
+            "n") echo "Changes will not be included..."
+		 exit 1;;
+            *) echo "invalid option"
+	       exit 1;;
+        esac
+}
+
+if $([ -d .git ]); then {
+  CURRENT_BRANCH=$(get_current_branch)
+  if [[ $(is_commitable_branch $CURRENT_BRANCH) -eq "1" ]]; then {
+      $(pull $CURRENT_BRANCH)
+      if [[ $(has_change) -eq "1" ]]; then {
+	  check_commit
+	  echo ========== PUSH TO $CURRENT_BRANCH ========
+          git push origin $CURRENT_BRANCH
+        }
+	else echo "*** No Changes Found ***"
+      fi
+    }
+    else echo "It's develop OR master"
+  fi
+}
+else echo "Its not a git repo"
+fi
