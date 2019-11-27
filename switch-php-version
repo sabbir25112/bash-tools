@@ -1,0 +1,30 @@
+#!/bin/bash
+
+echo "
+********************************************
+*             Switch PHP Versions          *
+********************************************
+
+"
+echo "Current PHP Version: "
+read CURRENT_PHP_VERSION
+
+echo "New PHP Version: "
+read NEW_PHP_VERSION
+
+a2dismod php${CURRENT_PHP_VERSION}
+
+update-alternatives --set php /usr/bin/php${NEW_PHP_VERSION}
+update-alternatives --set phar /usr/bin/phar${NEW_PHP_VERSION}
+update-alternatives --set phar.phar /usr/bin/phar.phar${NEW_PHP_VERSION}
+
+a2enmod php${NEW_PHP_VERSION}
+
+service apache2 restart
+
+echo "
+********************************************
+*            PHP Version Switched          *
+********************************************
+
+"
